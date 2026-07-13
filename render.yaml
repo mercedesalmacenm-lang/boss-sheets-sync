@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: boss-sheets-sync
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: GOOGLE_CREDENTIALS
+        sync: false
+      - key: SHEET_ID
+        value: 1FLznJQ0PBxqnMNRPI_JEgv_QD7o7RoiodZLZmDzGE6Y
+      - key: UPLOAD_DIR
+        value: ./uploads
