@@ -12,7 +12,7 @@ from flask import Flask, jsonify
 app = Flask(__name__)
 
 SHEET_ID = os.environ.get("SHEET_ID", "1FLznJQ0PBxqnMNRPI_JEgv_QD7o7RoiodZLZmDzGE6Y")
-UPLOAD_DIR = os.environ.get("UPLOAD_DIR", "./uploads")
+UPLOAD_DIR = os.environ.get("UPLOAD_DIR", os.path.join(os.path.expanduser("~"), "Desktop"))
 SCOPES = [
     "https://www.googleapis.com/auth/spreadsheets",
     "https://www.googleapis.com/auth/drive"
@@ -33,9 +33,38 @@ def get_sheet():
     client = gspread.authorize(creds)
     return client.open_by_key(SHEET_ID)
 
-def is_boss_file(filename):
-    name = filename.replace('.xlsx', '')
-    return bool(re.match(r'^\d{14,16}$', name))
+ENCABEZADOS_REQUERIDOS = ["articulo", "descripcion", "ubicacion"]
+
+def normalizar(texto):
+    import unicodedata
+    texto = str(texto).lower().strip()
+    texto = unicodedata.normalize("NFKD", texto)
+    return "".join(c for c in texto if not unicodedata.combining(c))
+
+def es_archivo_boss(filepath):
+    try:
+        wb = openpyxl.load_workbook(filepath, data_only=True, read_only=True)
+        ws = wb.active
+        rows = []
+        for row in ws.iter_rows(max_row=10, values_only=True):
+            rows.append([str(c).strip() if c is not None else "" for c in row])
+
+        tiene_titulo = any("maquinas fer" in normalizar(r[0]) for r in rows[:3] if r[0])
+        tiene_inventarios = any("inventarios" in normalizar(r[0]) for r in rows[:3] if r[0])
+        tiene_fecha = any(__import__("re").search(r'\d{1,2}/\w+/\d{2}', r[0]) for r in rows[:4] if r[0])
+
+        tiene_encabezados = False
+        for r in rows:
+            vals = [normalizar(v) for v in r if v]
+            if any(h in v for v in vals for h in ENCABEZADOS_REQUERIDOS):
+                tiene_encabezados = True
+                break
+
+        wb.close()
+        return tiene_titulo and tiene_inventarios and tiene_fecha and tiene_encabezados
+    except Exception:
+        pass
+    return False
 
 def read_excel(filepath):
     wb = openpyxl.load_workbook(filepath, data_only=True)
@@ -62,7 +91,7 @@ def upload_to_sheet(data, sheet, filename):
         return False, str(e)
 
 def process_file(filepath, filename, sheet):
-    if is_boss_file(filename):
+    if es_archivo_boss(filepath):
         data = read_excel(filepath)
         if data:
             success, result = upload_to_sheet(data, sheet, filename)
