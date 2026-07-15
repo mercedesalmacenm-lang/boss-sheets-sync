@@ -1,0 +1,30 @@
+# Cómo configurar el monitor en tu PC
+
+## Requisitos
+- Windows 10 o superior
+- Python 3.8 o superior ([descargar](https://www.python.org/downloads/))
+- **Importante:** Al instalar Python, marcar "Add Python to PATH"
+
+## Pasos
+
+1. **Copia esta carpeta** completa en tu PC (o descargala de GitHub)
+
+2. **Copia `credentials.json`** dentro de esta carpeta (si no está)
+
+3. **Ejecutá `iniciar.bat`** con doble clic
+
+4. **Listo.** El monitor está corriendo en segundo plano. Cada vez que exportás desde BOSS al Escritorio, lo detecta y lo sube automáticamente.
+
+## Qué hace
+- Escanea el Escritorio cada 10 segundos
+- Detecta archivos .xlsx de BOSS
+- Lee la columna "Almacen" del archivo
+- Sube los datos a una pestaña separada en Google Sheets
+- Cada almacén tiene su propia pestaña
+
+## Para detener
+Presioná `Ctrl+C` en la ventana del monitor, o cerrá la ventana.
+
+## Para que inicie automáticamente al prender la PC
+1. Presioná `Win + R`, escribí `shell:startup` y presioná Enter
+2. Copiá un acceso directo de `iniciar.bat` ahí
